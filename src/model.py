@@ -1,4 +1,5 @@
 from conllu_token import Token
+from algorithm import Sample
 import tensorflow as tf
 
 class ParserMLP:
