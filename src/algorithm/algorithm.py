@@ -146,12 +146,31 @@ class ArcEager():
         if not self.RA_is_valid(state):
             return False
         # RIGHT-ARc would create an arc from the head_token (last token in the stack)
-        # to the dependent_token (first token in the buffer).  We need to check if this
+        # to the dependent_token (first token in the buffer). We need to check if this
         # arc actually exists to determine if it is valid.
         head_token = state.S[-1]
         dependent_token = state.B[0]
 
         return dependent_token.head == head_token.id
+
+    def REDUCE_is_valid(self, state: State) -> bool:
+        """
+        Determines if a REDUCE transition is valid for the current parsing state.
+
+        This method checks if the preconditions for applying a REDUCE transition are met in 
+        the current state of the parser. This typically involves assessing the state of the 
+        stack and buffer.
+
+        Parameters:
+            state (State): The current state of the parser, including the stack and buffer.
+
+        Returns:
+            bool: True if a REDUCE transition is valid in the current state, False otherwise.
+        """
+        # Reduce would pop that last token in the stack, so we need to make
+        # sure that this token is the dependent in some arc before we remove it.
+        dependent_token = state.S[-1]
+        return dependent_token.id in [dependent_id for (_, _, dependent_id) in state.A]
 
     def REDUCE_is_correct(self, state: State) -> bool:
         """
@@ -170,25 +189,13 @@ class ArcEager():
         Returns:
             bool: True if a REDUCE transition is the correct action in the current state, False otherwise.
         """
-        #It is correct to do if there is no word in the state buffer  (state.B) which head is 
-        #the word on the top of the stack (state.S[-1])
-        raise NotImplementedError
-
-    def REDUCE_is_valid(self, state: State) -> bool:
-        """
-        Determines if a REDUCE transition is valid for the current parsing state.
-
-        This method checks if the preconditions for applying a REDUCE transition are met in 
-        the current state of the parser. This typically involves assessing the state of the 
-        stack and buffer.
-
-        Parameters:
-            state (State): The current state of the parser, including the stack and buffer.
-
-        Returns:
-            bool: True if a REDUCE transition is valid in the current state, False otherwise.
-        """
-        raise NotImplementedError
+        # First, check if this is a valid transition.
+        if not self.REDUCE_is_valid(state):
+            return False
+        # It is correct to do REDUCE if there is no word in the buffer whose head is 
+        # the word on the top of the stack (state.S[-1])
+        head_token = state.S[-1]
+        return all([ head_token.id != dependent_token.head for dependent_token in state.B ])
 
     def oracle(self, sent: list['Token']) -> list['Sample']:
         """
