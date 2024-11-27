@@ -109,21 +109,6 @@ class ArcEager():
 
         return dependent_token.head == head_token.id
     
-    def RA_is_correct(self, state: State) -> bool:
-        """
-        Determines if a RIGHT-ARC (RA) transition is the correct action for the current parsing state.
-
-        This method assesses whether applying a RIGHT-ARC transition aligns with the correct 
-        dependency structure of the sentence, based on the parser's current state.
-
-        Parameters:
-            state (State): The current state of the parser, including the stack and buffer.
-
-        Returns:
-            bool: True if a RIGHT-ARC transition is the correct action in the current state, False otherwise.
-        """
-        raise NotImplementedError
-
     def RA_is_valid(self, state: State) -> bool:
         """
         Checks the preconditions in order to apply a right-arc (RA) transition.
@@ -138,7 +123,35 @@ class ArcEager():
         Returns:
             bool: True if a RIGHT-ARC transition can be validly applied in the current state, False otherwise.
         """
-        raise NotImplementedError
+        # RIGHT-ARc would create an arc from the head_token (last token in the stack)
+        # to the dependent_token (first token in the buffer). We need to check that this 
+        # token isn't already the dependent of some existing arc.
+        dependent_token = state.B[0]
+        return dependent_token.id not in [dependent_id for (_, _, dependent_id) in state.A]
+
+    def RA_is_correct(self, state: State) -> bool:
+        """
+        Determines if a RIGHT-ARC (RA) transition is the correct action for the current parsing state.
+
+        This method assesses whether applying a RIGHT-ARC transition aligns with the correct 
+        dependency structure of the sentence, based on the parser's current state.
+
+        Parameters:
+            state (State): The current state of the parser, including the stack and buffer.
+
+        Returns:
+            bool: True if a RIGHT-ARC transition is the correct action in the current state, False otherwise.
+        """    
+        # First, check if this is a valid transition.
+        if not self.RA_is_valid(state):
+            return False
+        # RIGHT-ARc would create an arc from the head_token (last token in the stack)
+        # to the dependent_token (first token in the buffer).  We need to check if this
+        # arc actually exists to determine if it is valid.
+        head_token = state.S[-1]
+        dependent_token = state.B[0]
+
+        return dependent_token.head == head_token.id
 
     def REDUCE_is_correct(self, state: State) -> bool:
         """
