@@ -275,34 +275,39 @@ class ArcEager():
         dep = transition.dependency
 
         # The top item on the stack and the first item in the buffer
-        s = state.S[-1] if state.S else None  # Top of the stack
+        s = state.S[-1] if state.S else None  # Last in the stack
         b = state.B[0] if state.B else None   # First in the buffer
 
         if t == self.LA and self.LA_is_valid(state):
-            # LEFT-ARC transition logic: to be implemented
-            # Add an arc to the state from the top of the buffer to the top of the stack
-            # Remove from the state the top word from the stack
-            raise NotImplementedError
+            # LEFT-ARc creates an arc from the head_token (first token in the buffer)
+            # to the dependent_token (last token in the stack). The dependent_token
+            # is removed from the top of the stack.
+            state.A.append(
+                # a --dep--> s
+                (b,dep,s)
+            )
+            state.S.pop()
 
         elif t == self.RA and self.RA_is_valid(state): 
-            # RIGHT-ARC transition
-            # Add an arc to the state from the stack top to the buffer head with the specified dependency
-            # Move from the state the buffer head to the stack
-            # Remove from the state the first item from the buffer
-            raise NotImplementedError
+            # RIGHT-ARc creates an arc from the head_token (last token in the stack)
+            # to the dependent_token (first token in the buffer). The dependent_token
+            # is moved from the buffer to the top of the stack.
+            state.A.append(
+                # s --dep--> b
+                (s,dep,b)
+            )
+            # Move from buffer to stack
+            state.B.pop(0)
+            state.S.push(b)
 
         elif t == self.REDUCE and self.has_head(s, state.A): 
-            # REDUCE transition logic: to be implemented
-            # Remove from state the word from the top of the stack
-            raise NotImplementedError
-
+            # REDUCE removes the word from the top of the stack.
+            state.S.pop()
         else:
             # SHIFT transition logic: Already implemented! Use it as a basis to implement the others
             #This involves moving the top of the buffer to the stack
             state.S.append(b) 
             del state.B[:1]
-    
-
 
     def gold_arcs(self, sent: list['Token']) -> set:
         """
