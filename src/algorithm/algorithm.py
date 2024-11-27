@@ -224,34 +224,39 @@ class ArcEager():
         while not self.final_state(state):
             
             if self.LA_is_valid(state) and self.LA_is_correct(state):
-                #Add current state 'state' (the input) and the transition taken (the desired output) to the list of samples
-                #Update the state by applying the LA transition using the function apply_transition
-                raise NotImplementedError
-
-            elif self.RA_is_valid(state) and self.RA_is_correct(state):
-                #Add current state 'state' (the input) and the transition taken (the desired output) to the list of samples
-                #Update the state by applying the RA transition using the function apply_transition
-                raise NotImplementedError
-
-            elif self.REDUCE_is_valid(state) and self.REDUCE_is_correct(state):
-                #Add current state 'state' (the input) and the transition taken (the desired output) to the list of samples
-                #Update the state by applying the REDUCE transition using the function apply_transition
-                raise NotImplementedError
-            else:
-                #If no other transiton can be applied, it's a SHIFT transition
-                transition = Transition(self.SHIFT)
-                #Add current state 'state' (the input) and the transition taken (the desired output) to the list of samples
+                # LEFT-ARc creates an arc from the head_token (first token in the buffer)
+                # to the dependent_token (last token in the stack), so the dependency
+                # is given by the last token in the stack.
+                transition = Transition(self.LA, dependency = state.S[-1].dep)
                 samples.append(Sample(state, transition))
-                #Update the state by applying the SHIFT transition using the function apply_transition
                 self.apply_transition(state,transition)
 
+            elif self.RA_is_valid(state) and self.RA_is_correct(state):
+                # RIGHT-ARc creates an arc from the head_token (last token in the stack)
+                # to the dependent_token (first token in the buffer), so the dependency
+                # is given by the first token in the buffer.
+                transition = Transition(self.RA, dependency = state.B[0].dep)
+                samples.append(Sample(state, transition))
+                self.apply_transition(state,transition)
 
-        #When the oracle ends, the generated arcs must
-        #match exactly the gold arcs, otherwise the obtained sequence of transitions is not correct
+            elif self.REDUCE_is_valid(state) and self.REDUCE_is_correct(state):
+                # REDUCE removes the word from the top of the stack, so no dependency
+                # is needed for the transition.
+                transition = Transition(self.REDUCE)
+                samples.append(Sample(state, transition))
+                self.apply_transition(state,transition)
+            else:
+                # SHIFT moves the first element in the buffer to the top of the stack,
+                # so no dependency is needed for the transition.
+                transition = Transition(self.SHIFT)
+                samples.append(Sample(state, transition))
+                self.apply_transition(state,transition)
+
+        # When the oracle ends, the generated arcs must match exactly the gold arcs, otherwise
+        # the obtained sequence of transitions is not correct
         assert self.gold_arcs(sent) == state.A, f"Gold arcs {self.gold_arcs(sent)} and generated arcs {state.A} do not match"
     
-        return samples         
-    
+        return samples       
 
     def apply_transition(self, state: State, transition: Transition):
         """
@@ -304,10 +309,9 @@ class ArcEager():
             # REDUCE removes the word from the top of the stack.
             state.S.pop()
         else:
-            # SHIFT transition logic: Already implemented! Use it as a basis to implement the others
-            #This involves moving the top of the buffer to the stack
-            state.S.append(b) 
-            del state.B[:1]
+            # SHIFT moves the first element in the buffer to the top of the stack.
+            state.B.pop(0)
+            state.S.append(b)
 
     def gold_arcs(self, sent: list['Token']) -> set:
         """
@@ -334,9 +338,6 @@ class ArcEager():
             gold_arcs.add((token.head, token.dep, token.id))
 
         return gold_arcs
-
-
-   
 
 
 if __name__ == "__main__":
