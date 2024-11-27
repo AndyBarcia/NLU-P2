@@ -1,5 +1,6 @@
 from algorithm.transition import Transition
 from state import State
+from ..utils import extract_first_n, extract_last_n, flatten_list_of_lists
 
 
 class Sample(object):
@@ -88,8 +89,24 @@ class Sample(object):
 
                 Output: ['ROOT', 'Distribution', 'license', 'does', 'ROOT_UPOS', 'NOUN', 'NOUN', 'AUX']
         """
-        raise NotImplementedError
 
+        # Get the N first tokens from the buffer with padding included.
+        buffer_tokens = extract_first_n(self.state.B, nbuffer_feats, pad_value=None)
+        # Get the M last tokens from the stack
+        stack_tokens = extract_last_n(self.state.S, nstack_feats, pad_value=None)
+
+        # Get the actual words from the tokens.
+        buffer_form = [tok.form if tok else '<PAD>' for tok in buffer_tokens]
+        buffer_upos = [tok.upos if tok else '<PAD>' for tok in buffer_tokens]
+        # Get the UPOS tags from the tokens.
+        stack_form = [tok.form if tok else '<PAD>' for tok in stack_tokens]
+        stack_upos = [tok.upos if tok else '<PAD>' for tok in stack_tokens]
+
+        # Join the 4 lists together.
+        return flatten_list_of_lists([
+            stack_form, buffer_form,
+            stack_upos, buffer_upos
+        ])
 
     def __str__(self):
         """
