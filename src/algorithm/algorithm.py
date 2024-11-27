@@ -73,7 +73,17 @@ class ArcEager():
         Returns:
             bool: True if a LEFT-ARC transition is valid in the current state, False otherwise.
         """
-        raise NotImplementedError
+
+        # We can't apply LEFT-ARC if the token being processed is ROOT, as this would
+        # leave the stack empty.
+        dependent_token = state.S[-1]
+        if dependent_token.form == "ROOT":
+            assert len(state.S) == 1, "Stack should only contain ROOT"
+            return False
+        # LEFT-ARc would create an arc from the head_token (first token in the buffer)
+        # to the dependent_token (last token in the stack). We need to check that this 
+        # token isn't already the dependent of some existing arc.
+        return dependent_token.id not in [dependent_id for (_, _, dependent_id) in state.A]
 
     def LA_is_correct(self, state: State) -> bool:
         """
@@ -88,7 +98,16 @@ class ArcEager():
         Returns:
             bool: True if a LEFT-ARC transition is the correct action in the current state, False otherwise.
         """
-        raise NotImplementedError
+        # First, check if this is a valid transition.
+        if not self.LA_is_valid(state):
+            return False
+        # LEFT-ARc would create an arc from the head_token (first token in the buffer)
+        # to the dependent_token (last token in the stack). We need to check if this
+        # arc actually exists to determine if it is valid.
+        head_token = state.B[0]
+        dependent_token = state.S[-1]
+
+        return dependent_token.head == head_token.id
     
     def RA_is_correct(self, state: State) -> bool:
         """
