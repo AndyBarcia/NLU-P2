@@ -1,4 +1,4 @@
-from conllu_token import Token 
+from src.conllu_token import Token 
 
 class State(object):
     """

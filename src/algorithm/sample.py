@@ -1,6 +1,6 @@
-from algorithm.transition import Transition
-from state import State
-from ..utils import extract_first_n, extract_last_n, flatten_list_of_lists
+from src.algorithm.transition import Transition
+from src.state import State
+from src.utils import extract_first_n, extract_last_n, flatten_list_of_lists
 
 
 class Sample(object):

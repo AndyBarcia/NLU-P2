@@ -1,7 +1,7 @@
-from algorithm.sample import Sample
-from algorithm.transition import Transition
-from state import State
-from conllu_token import Token
+from src.algorithm.sample import Sample
+from src.algorithm.transition import Transition
+from src.state import State
+from src.conllu_token import Token
 
 
 class ArcEager():
