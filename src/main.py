@@ -49,9 +49,11 @@ dev_trees_samples   = [ arc_eager.oracle(tokens) for tokens in tqdm(dev_trees, d
 
 print ("\n ------ Training model ------")
 
-model = ParserMLP()
+model = ParserMLP(epochs=1)
 model.train(train_trees_samples, dev_trees_samples)
 model.evaluate(dev_trees_samples)
+
+model.run(test_trees)
 
 # TODO: Define and implement the neural model in the 'model.py' module.
 # 1. Train the model on the generated training dataset.

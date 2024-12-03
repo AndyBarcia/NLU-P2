@@ -2,6 +2,7 @@ from src.algorithm.transition import Transition
 from src.state import State
 from src.utils import extract_first_n, extract_last_n, flatten_list_of_lists
 
+from typing import Optional
 
 class Sample(object):
     """
@@ -15,13 +16,15 @@ class Sample(object):
         state (State): An instance of the State class, representing the current parsing 
                        state at a given timestep in the parsing process.
         transition (Transition): An instance of the Transition class, representing the 
-                                 parser action to be taken in the given state.
+                       parser action to be taken in the given state. It can be None if
+                       the transition to be taken is still unknown (the model is running
+                       in inference mode).
 
     Methods:
         state_to_feats(nbuffer_feats: int = 2, nstack_feats: int = 2): Extracts features from the parsing state.
     """
 
-    def __init__(self, state: State, transition: Transition):
+    def __init__(self, state: State, transition: Optional[Transition] = None):
         """
         Initializes a new instance of the Sample class.
 

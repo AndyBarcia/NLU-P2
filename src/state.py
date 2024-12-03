@@ -1,14 +1,16 @@
 from src.conllu_token import Token 
+
 from copy import copy
+from typing import List, Set
 
 class State(object):
     """
     Class to represent a parsing state in dependency parsing.
 
     Attributes:
-        S (list['Token']): A stack holding tokens that are 
+        S (List[Token]): A stack holding tokens that are 
                            currently being processed.
-        B (list['Token']): A buffer holding tokens that are yet 
+        B (List[Token]): A buffer holding tokens that are yet 
                            to be processed.
         A (set[tuple]): A set of arcs of the form (head_id, dependency_label, dependent_id) 
                         created during parsing, representing the dependencies.
@@ -17,7 +19,7 @@ class State(object):
     process, including which tokens are being considered and the relationships formed between tokens.
     """
 
-    def __init__(self, s: list, b: list, a: set):
+    def __init__(self, s: List[Token], b: List[Token], a: Set[tuple]):
         """
         Initializes a new instance of the State class.
 

@@ -4,6 +4,7 @@ from src.state import State
 from src.conllu_token import Token
 
 from copy import copy
+from typing import List, Set
 
 class ArcEager():
 
@@ -32,7 +33,7 @@ class ArcEager():
     SHIFT = "SHIFT"
     REDUCE = "REDUCE"
 
-    def create_initial_state(self, sent: list['Token']) -> State:
+    def create_initial_state(self, sent: List[Token]) -> State:
         """
         Creates the initial state for the arc-eager parsing algorithm given a sentence.
 
@@ -198,7 +199,7 @@ class ArcEager():
         head_token = state.S[-1]
         return all([ head_token.id != dependent_token.head for dependent_token in state.B ])
 
-    def oracle(self, sent: list['Token']) -> list['Sample']:
+    def oracle(self, sent: List[Token]) -> List[Sample]:
         """
         Computes the gold transitions to take at each parsing step, given an input dependency tree.
 
@@ -209,11 +210,11 @@ class ArcEager():
         used for later training a dependency parser.
 
         Parameters:
-            sent (list['Token']): A list of 'Token' instances representing a dependency tree. Each 'Token' 
+            sent (List[Token]): A list of 'Token' instances representing a dependency tree. Each 'Token' 
                         should contain information about a word/token in a sentence.
 
         Returns:
-            samples (list['Sample']): A list of Sample instances. Each Sample stores an state instance and a transition instance
+            samples (List[Sample]): A list of Sample instances. Each Sample stores an state instance and a transition instance
             with the information of the outputs to predict (the transition and optionally the dependency label)
         """
 
@@ -317,7 +318,7 @@ class ArcEager():
             state.B.pop(0)
             state.S.append(b)
 
-    def gold_arcs(self, sent: list['Token']) -> set:
+    def gold_arcs(self, sent: List[Token]) -> Set[tuple]:
         """
         Extracts and returns the gold-standard dependency arcs from a given sentence.
 

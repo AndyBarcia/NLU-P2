@@ -3,11 +3,15 @@ from src.algorithm.sample import Sample
 from src.utils import flatten_list_of_lists
 from src.id_mapping import MappingStrID
 from src.metrics import SparseCategoricalAccuracyIgnoreClass
+from src.algorithm.algorithm import ArcEager
+from src.algorithm.sample import Sample
 
 import tensorflow as tf
 from keras import layers, models
 from keras.losses import SparseCategoricalCrossentropy
 from keras.metrics import SparseCategoricalAccuracy
+
+from typing import List
 
 class ParserMLP:
     """
@@ -64,7 +68,7 @@ class ParserMLP:
         self.action_mapping = MappingStrID()
         self.dependency_mapping = MappingStrID()
     
-    def _samples_to_features_and_targets(self, samples: list['Sample']):
+    def _samples_to_features_and_targets(self, samples: List[List[Sample]]):
         # Get features of the sample set based on N buffer elements and M stack elements.
         trees_feats = flatten_list_of_lists([
             [ sample.state_to_feats(self.nbuffer_feats, self.nstack_feats) for sample in samples ] 
@@ -79,7 +83,7 @@ class ParserMLP:
 
         # Get action targets of the sample set: the transition to be taken at each sample.
         trees_action_targets = flatten_list_of_lists(
-            [ sample.transition.action for sample in samples ]
+            [ sample.transition.action for sample in samples if sample.transition ]
             for samples in samples
         ) # [ transition, transition... ]
 
@@ -91,7 +95,7 @@ class ParserMLP:
 
         # Get dependency targets of the sample set: the transition to be taken at each sample.
         trees_dependency_targets = flatten_list_of_lists(
-            [ sample.transition.dependency for sample in samples ]
+            [ sample.transition.dependency for sample in samples if sample.transition ]
             for samples in samples
         ) # [ dependency, dependency... ]
 
@@ -105,7 +109,7 @@ class ParserMLP:
 
         return trees_feats, trees_action_targets, trees_dependency_targets
 
-    def train(self, training_samples: list['Sample'], dev_samples: list['Sample']):
+    def train(self, training_samples: List[List[Sample]], dev_samples: List[List[Sample]]):
         """
         Trains the MLP model using the provided training and development samples.
 
@@ -113,8 +117,8 @@ class ParserMLP:
         embedding layers and then proceeds to compile and fit the Keras model.
 
         Parameters:
-            training_samples (list[Sample]): A list of training samples for the parser.
-            dev_samples (list[Sample]): A list of development samples used for model validation.
+            training_samples (List[List[Sample]]): A batched list of training samples for the parser.
+            dev_samples (List[List[Sample]]): A batched list of development samples used for model validation.
         """
 
         # Convert samples to features and targets.
@@ -186,11 +190,11 @@ class ParserMLP:
             dev_x, {
                 'action_pred': dev_action_y, 
                 'dependency_pred': dev_dep_y
-        }), epochs=5)
+        }), epochs=self.epochs)
 
         return self.model
 
-    def evaluate(self, samples: list['Sample']):
+    def evaluate(self, samples: List[List[Sample]]):
         """
         Evaluates the model's performance on a set of samples.
 
@@ -210,7 +214,7 @@ class ParserMLP:
             'dependency_pred': dep_y
         })
     
-    def run(self, sents: list['Token']):
+    def run(self, sents: List[List[Token]]):
         """
         Executes the model on a list of sentences to perform dependency parsing.
 
