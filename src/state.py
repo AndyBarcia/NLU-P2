@@ -1,4 +1,5 @@
 from src.conllu_token import Token 
+from copy import copy
 
 class State(object):
     """
@@ -59,6 +60,12 @@ class State(object):
         """
         return self._A
 
+    def __copy__(self):
+        return State(
+            copy(self.S),
+            copy(self.B),
+            copy(self.A)
+        )
 
     def __str__(self):
         """

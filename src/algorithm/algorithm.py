@@ -3,7 +3,7 @@ from src.algorithm.transition import Transition
 from src.state import State
 from src.conllu_token import Token
 
-from copy import deepcopy
+from copy import copy
 
 class ArcEager():
 
@@ -231,7 +231,7 @@ class ArcEager():
                 transition = Transition(self.LA, dependency = state.S[-1].dep)
                 # Remember to clone state before apllying transition. Otherwise, aliased
                 # references are stores in the sample list. 
-                samples.append((Sample(deepcopy(state), transition)))
+                samples.append((Sample(copy(state), transition)))
                 self.apply_transition(state,transition)
 
             elif self.RA_is_valid(state) and self.RA_is_correct(state):
@@ -239,20 +239,20 @@ class ArcEager():
                 # to the dependent_token (first token in the buffer), so the dependency
                 # is given by the first token in the buffer.
                 transition = Transition(self.RA, dependency = state.B[0].dep)
-                samples.append(Sample(deepcopy(state), transition))
+                samples.append(Sample(copy(state), transition))
                 self.apply_transition(state,transition)
 
             elif self.REDUCE_is_valid(state) and self.REDUCE_is_correct(state):
                 # REDUCE removes the word from the top of the stack, so no dependency
                 # is needed for the transition.
                 transition = Transition(self.REDUCE)
-                samples.append(Sample(deepcopy(state), transition))
+                samples.append(Sample(copy(state), transition))
                 self.apply_transition(state,transition)
             else:
                 # SHIFT moves the first element in the buffer to the top of the stack,
                 # so no dependency is needed for the transition.
                 transition = Transition(self.SHIFT)
-                samples.append(Sample(deepcopy(state), transition))
+                samples.append(Sample(copy(state), transition))
                 self.apply_transition(state,transition)
 
         # When the oracle ends, the generated arcs must match exactly the gold arcs, otherwise
