@@ -25,4 +25,4 @@ class MappingStrID:
         return self.id_to_obj.get(id, "<UNK>")
     
     def __len__(self):
-        return len(self.id_to_obj) + 1
+        return len(self.id_to_obj)
