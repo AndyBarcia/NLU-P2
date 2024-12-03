@@ -1,5 +1,8 @@
-from conllu_token import Token
-from algorithm.sample import Sample
+from src.conllu_token import Token
+from src.algorithm.sample import Sample
+from src.utils import flatten_list_of_lists
+from src.id_mapping import MappingStrID
+
 import tensorflow as tf
 
 class ParserMLP:
@@ -44,8 +47,40 @@ class ParserMLP:
             epochs (int): The number of epochs for training the model.
             batch_size (int): The batch size used during model training.
         """
-        raise NotImplementedError
+        
+        self.nbuffer_feats = 5
+        self.nstack_feats = 5
     
+        self.word_mapping = MappingStrID(include_padding=True)
+        self.transition_mapping = MappingStrID()    
+    
+    def _samples_to_features_and_targets(self, samples: list['Sample']):
+        # Get features of the sample set based on N buffer elements and M stack elements.
+        trees_feats = flatten_list_of_lists([
+            [ sample.state_to_feats(self.nbuffer_feats, self.nstack_feats) for sample in samples ] 
+            for samples in samples 
+        ]) # [[ str, str, str... ]]
+
+        # Convert string features to int IDs.
+        trees_feats = tf.constant([ 
+            [ self.word_mapping.register_obj(feats) for feats in sentence_feats ] 
+            for sentence_feats in trees_feats 
+        ]) # shape (N, 2*(nbuffer_feats+nstack_feats))
+
+        # Get targets of the sample set: the transition to be taken at each sample.
+        trees_targets = flatten_list_of_lists(
+            [ sample.transition for sample in samples ]
+            for samples in samples
+        ) # [ transition, transition... ]
+
+        # Convert string targets to int IDs.
+        trees_targets = tf.constant([
+            self.transition_mapping.register_obj(targets) 
+            for targets in trees_targets 
+        ]) # shape (N,)
+
+        return trees_feats, trees_targets
+
     def train(self, training_samples: list['Sample'], dev_samples: list['Sample']):
         """
         Trains the MLP model using the provided training and development samples.
@@ -57,6 +92,13 @@ class ParserMLP:
             training_samples (list[Sample]): A list of training samples for the parser.
             dev_samples (list[Sample]): A list of development samples used for model validation.
         """
+
+        # Convert samples to features and targets.
+        train_trees_feats, train_trees_targets = self._samples_to_features_and_targets(training_samples)
+        dev_trees_feats, dev_trees_targets = self._samples_to_features_and_targets(dev_samples)
+
+        
+
         raise NotImplementedError
 
     def evaluate(self, samples: list['Sample']):

@@ -1,23 +1,25 @@
-
 from src.conllu_reader import ConlluReader
 from src.algorithm.algorithm import ArcEager
+from src.model import ParserMLP
+
+from tqdm import tqdm
+from typing import Dict
 
 def read_file(reader, path, inference):
     trees = reader.read_conllu_file(path, inference)
     print(f"Read a total of {len(trees)} sentences from {path}")
-    print (f"Printing the first sentence of the training set... trees[0] = {trees[0]}")
-    for token in trees[0]:
-        print (token)
-    print ()
+    #print (f"Printing the first sentence of the training set... trees[0] = {trees[0]}")
+    #for token in trees[0]:
+    #    print (token)
+    #print()
     return trees
 
 
-"""
-ALREADY IMPLEMENTED
-Read and convert CoNLLU files into tree structures
-"""
 # Initialize the ConlluReader
 reader = ConlluReader()
+
+print ("\n ------ Loading CoNLLU files ------")
+
 train_trees = read_file(reader,path="conllu/en_partut-ud-train_clean.conllu", inference=False)
 dev_trees = read_file(reader,path="conllu/en_partut-ud-dev_clean.conllu", inference=False)
 test_trees = read_file(reader,path="conllu/en_partut-ud-test_clean.conllu", inference=True)
@@ -28,6 +30,9 @@ as the Arc-Eager algorithm cannot parse non-projective sentences.
 
 We don't remove them from test set set, because for those we only will do inference
 """
+
+print ("\n ------ Removing Non Projective Trees ------")
+
 train_trees = reader.remove_non_projective_trees(train_trees)
 dev_trees = reader.remove_non_projective_trees(dev_trees)
 
@@ -37,19 +42,15 @@ print ("Total dev trees after removing non-projective sentences", len(dev_trees)
 #Create and instance of the ArcEager
 arc_eager = ArcEager()
 
-print ("\n ------ TODO: Implement the rest of the assignment ------")
+print ("\n ------ Generating Samples from Sentence Tokens ------")
 
-# TODO: Complete the ArcEager algorithm class.
-# 1. Implement the 'oracle' function and auxiliary functions to determine the correct parser actions.
-#    Note: The SHIFT action is already implemented as an example.
-#    Additional Note: The 'create_initial_state()', 'final_state()', and 'gold_arcs()' functions are already implemented.
-# 2. Use the 'oracle' function in ArcEager to generate all training samples, creating a dataset for training the neural model.
-# 3. Utilize the same 'oracle' function to generate development samples for model tuning and evaluation.
+train_trees_samples = [ arc_eager.oracle(tokens) for tokens in tqdm(train_trees, desc="Train") ]
+dev_trees_samples   = [ arc_eager.oracle(tokens) for tokens in tqdm(dev_trees, desc="Dev") ]
 
-# TODO: Implement the 'state_to_feats' function in the Sample class.
-# This function should convert the current parser state into a list of features for use by the neural model classifier.
+print ("\n ------ Training model ------")
 
-# TODO: Use function to convert string from samples into numbers
+model = ParserMLP()
+model.train(train_trees_samples, dev_trees_samples)
 
 # TODO: Define and implement the neural model in the 'model.py' module.
 # 1. Train the model on the generated training dataset.
