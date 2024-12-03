@@ -19,10 +19,10 @@ class MappingStrID:
             return id
     
     def obj_to_id(self, string:str) -> int:
-        return self.obj_to_id.get(string, "<UNK>")
+        return self.obj_to_id.get(string, len(self.id_to_obj))
 
     def id_to_obj(self, id:int) -> str:
-        return self.id_to_obj.get(id, len(self.id_to_obj))
+        return self.id_to_obj.get(id, "<UNK>")
     
     def __len__(self):
         return len(self.id_to_obj) + 1
