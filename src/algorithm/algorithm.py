@@ -3,6 +3,7 @@ from src.algorithm.transition import Transition
 from src.state import State
 from src.conllu_token import Token
 
+from copy import deepcopy
 
 class ArcEager():
 
@@ -228,7 +229,9 @@ class ArcEager():
                 # to the dependent_token (last token in the stack), so the dependency
                 # is given by the last token in the stack.
                 transition = Transition(self.LA, dependency = state.S[-1].dep)
-                samples.append(Sample(state, transition))
+                # Remember to clone state before apllying transition. Otherwise, aliased
+                # references are stores in the sample list. 
+                samples.append((Sample(deepcopy(state), transition)))
                 self.apply_transition(state,transition)
 
             elif self.RA_is_valid(state) and self.RA_is_correct(state):
@@ -236,20 +239,20 @@ class ArcEager():
                 # to the dependent_token (first token in the buffer), so the dependency
                 # is given by the first token in the buffer.
                 transition = Transition(self.RA, dependency = state.B[0].dep)
-                samples.append(Sample(state, transition))
+                samples.append(Sample(deepcopy(state), transition))
                 self.apply_transition(state,transition)
 
             elif self.REDUCE_is_valid(state) and self.REDUCE_is_correct(state):
                 # REDUCE removes the word from the top of the stack, so no dependency
                 # is needed for the transition.
                 transition = Transition(self.REDUCE)
-                samples.append(Sample(state, transition))
+                samples.append(Sample(deepcopy(state), transition))
                 self.apply_transition(state,transition)
             else:
                 # SHIFT moves the first element in the buffer to the top of the stack,
                 # so no dependency is needed for the transition.
                 transition = Transition(self.SHIFT)
-                samples.append(Sample(state, transition))
+                samples.append(Sample(deepcopy(state), transition))
                 self.apply_transition(state,transition)
 
         # When the oracle ends, the generated arcs must match exactly the gold arcs, otherwise
@@ -287,9 +290,9 @@ class ArcEager():
             # LEFT-ARc creates an arc from the head_token (first token in the buffer)
             # to the dependent_token (last token in the stack). The dependent_token
             # is removed from the top of the stack.
-            state.A.append(
+            state.A.add(
                 # a --dep--> s
-                (b,dep,s)
+                (b.id,dep,s.id)
             )
             state.S.pop()
 
@@ -297,15 +300,16 @@ class ArcEager():
             # RIGHT-ARc creates an arc from the head_token (last token in the stack)
             # to the dependent_token (first token in the buffer). The dependent_token
             # is moved from the buffer to the top of the stack.
-            state.A.append(
+            state.A.add(
                 # s --dep--> b
-                (s,dep,b)
+                (s.id,dep,b.id)
             )
             # Move from buffer to stack
             state.B.pop(0)
-            state.S.push(b)
+            state.S.append(b)
 
-        elif t == self.REDUCE and self.has_head(s, state.A): 
+        #elif t == self.REDUCE and self.has_head(s, state.A): 
+        elif t == self.REDUCE and self.REDUCE_is_valid(state):  
             # REDUCE removes the word from the top of the stack.
             state.S.pop()
         else:
