@@ -51,6 +51,7 @@ print ("\n ------ Training model ------")
 
 model = ParserMLP()
 model.train(train_trees_samples, dev_trees_samples)
+model.evaluate(dev_trees_samples)
 
 # TODO: Define and implement the neural model in the 'model.py' module.
 # 1. Train the model on the generated training dataset.
