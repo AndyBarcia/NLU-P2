@@ -23,3 +23,12 @@ class Transition(object):
 
     def __str__(self):
         return f"{self._action}-{self._dependency}" if self._dependency else str(self._action)
+    
+    def __hash__(self) -> int:
+        return hash((self._action, self._dependency))
+    
+    def __eq__(self, value: object) -> bool:
+        if isinstance(value , Transition):
+            return self._action == value._action and self._dependency == value._dependency
+        else:
+            return False
